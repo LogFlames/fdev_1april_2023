@@ -37,6 +37,7 @@ class WebSocket:
             await websocket.send(AUTH_SEND)
             while True:
                 res = json.loads(await websocket.recv())
+                print(res)
                 if "event" in res and res["event"] in self.subscriptions and "data" in res:
                     for callback in self.subscriptions[res["event"]]:
                         callback(res["data"])
