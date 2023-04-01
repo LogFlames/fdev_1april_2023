@@ -1,5 +1,6 @@
 from mattermostdriver import Driver
 from threading import Thread
+from alive_progress import alive_bar
 import json
 
 from secret import TOKEN
@@ -11,21 +12,30 @@ def get_all_channels(driver: Driver, page, per_page):
     )
 
 def add_dock_emojis(driver: Driver, channels):
-    threads = []
-    for channel in channels:
-        res = driver.posts.get_posts_for_channel(channel_id = channel)
-        for post in res["posts"]:
-#            print(f"Reacting to post {post}")
-            thread = Thread(target=driver.reactions.create_reaction, args = ({
-                "user_id": driver.client.userid,
-                "post_id": res["posts"][post]["id"],
-                "emoji_name": "duck"
-                },))
-            thread.start()
-            threads.append(thread)
+    with alive_bar(len(channels)) as bar:
+        for channel in channels:
+            threads = []
+            res = driver.posts.get_posts_for_channel(channel_id = channel)
+            for post in res["posts"]:
+                """
+                thread = Thread(target=driver.reactions.create_reaction, args = ({
+                    "user_id": driver.client.userid,
+                    "post_id": res["posts"][post]["id"],
+                    "emoji_name": "duck"
+                    },))
+                """
+                thread = Thread(target=driver.reactions.delete_reaction, kwargs={
+                    "user_id": driver.client.userid, 
+                    "post_id": res["posts"][post]["id"], 
+                    "emoji_name": "duck"
+                    })
 
-    for thread in threads:
-        thread.join()
+                thread.start()
+                threads.append(thread)
+
+            for thread in threads:
+                thread.join()
+            bar()
 
 def main():
     driver = Driver(
@@ -59,7 +69,7 @@ def main():
     print(channels)
 
 
-    channels = ["717mezsoofdhbpc7pijgih9t4r"] # remove on 1 first
+#    channels = ["717mezsoofdhbpc7pijgih9t4r"] # remove on 1 first
     add_dock_emojis(driver, channels)
 
 
